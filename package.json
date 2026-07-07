@@ -1,6 +1,6 @@
 {
   "name": "brain-garden",
-  "version": "1.0.0-beta",
+  "version": "1.0.0-beta.2",
   "description": "3岁儿童逻辑思维游戏 - 小动物喂食",
   "type": "module",
   "scripts": {

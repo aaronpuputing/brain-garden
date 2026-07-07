@@ -1,3 +1,17 @@
+## [1.0.0-beta.2] - 2026-07-07
+
+### Fixed
+- FeedAnimalsScene/ColorTrainScene localStorage 数据持久化缺失（花永远不开、看板永远 1/10）
+- FeedAnimalsScene onRoundComplete 缺完成按钮（无限循环无法退出）
+- ColorTrainScene 语音分号重复 (;;)
+- generators/index.js PuzzleGenerator 导出名 PUZZLE_ANIMALS → PUZZLE_SETS
+
+### Infrastructure
+- gstack 完整门禁链跑通：/review (0 issues) → /qa (HTTP 200) → /ship (v1.0.0-beta.2)
+- Git 仓库初始化，首次 commit b663227
+
+---
+
 # Changelog
 
 All notable changes to Brain Garden will be documented in this file.
@@ -182,5 +196,3 @@ All notable changes to Brain Garden will be documented in this file.
 - Self-adapting difficulty (2 types -> 4 types of animals)
 - Touch-only interaction (iPad optimized)
 - Phaser 3 + Vite build pipeline
-
-
