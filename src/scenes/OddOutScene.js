@@ -1,6 +1,11 @@
 import { generateRound } from '../generators/OddOutGenerator.js';
 import SoundManager from '../utils/SoundManager.js';
+var ODDOUT_IMG_MAP = { '🐱':'oddout_cat','🐶':'oddout_dog','🐰':'oddout_bunny','🐟':'oddout_fish','🍎':'oddout_apple','🍌':'oddout_banana','🥕':'oddout_carrot','🌳':'oddout_tree' };
+
 import VoicePrompt from "../utils/VoicePrompt.js";
+
+import BackgroundMusic from '../utils/BackgroundMusic.js';
+import AdaptiveDifficulty from '../utils/AdaptiveDifficulty.js';
 
 export default class OddOutScene extends Phaser.Scene {
   constructor() { super({ key: 'OddOutScene' }); }
@@ -10,6 +15,8 @@ export default class OddOutScene extends Phaser.Scene {
     this.round = 0;
     this.isAnimating = false;
     this.voicePrompt = null;
+    this.bgMusic = null;
+    this.adaptive = null;
   }
 
   create() {
@@ -22,6 +29,11 @@ export default class OddOutScene extends Phaser.Scene {
     this.newRound();
 
     this.voicePrompt = new VoicePrompt(this);
+    this.bgMusic = new BackgroundMusic();
+    this.bgMusic.start();
+    this.adaptive = new AdaptiveDifficulty();
+    this.adaptive.level = this.difficulty;
+
     this.voicePrompt.start(
       '看一看，哪一个跟其他的不一样？找到它，点一下！',
       '仔细看看，哪个小动物混进来了？',
@@ -30,6 +42,7 @@ export default class OddOutScene extends Phaser.Scene {
   }
 
   shutdown() {
+    if (this.bgMusic) { this.bgMusic.stop(); this.bgMusic = null; }
     if (this.voicePrompt) { this.voicePrompt.stop(); this.voicePrompt = null; }
   }
 
@@ -70,7 +83,7 @@ export default class OddOutScene extends Phaser.Scene {
 
   newRound() {
     var self = this;
-    if (this.itemSprites) this.itemSprites.forEach(function(s) { s.destroy(); });
+    if (this.itemSprites) this.itemSprites.forEach(function(s) { if (s.txt) s.txt.destroy(); if (s.frame) s.frame.destroy(); });
     this.itemSprites = [];
     this.isAnimating = false;
     this.round++;
@@ -92,9 +105,13 @@ export default class OddOutScene extends Phaser.Scene {
       frame.lineStyle(2, 0xE0E0E0, 0.5);
       frame.strokeRoundedRect(x - 55, y - 55, 110, 110, 20);
 
-      var txt = self.add.text(x, y, emoji, {
-        fontSize: '72px', fontFamily: 'sans-serif'
-      }).setOrigin(0.5).setInteractive();
+      var imgKey = ODDOUT_IMG_MAP[emoji];
+      var txt;
+      if (imgKey && self.textures.exists(imgKey)) {
+        txt = self.add.image(x, y, imgKey).setDisplaySize(90, 90).setOrigin(0.5).setInteractive();
+      } else {
+        txt = self.add.text(x, y, emoji, { fontSize: '72px', fontFamily: 'sans-serif' }).setOrigin(0.5).setInteractive();
+      }
 
       txt.on('pointerdown', function() {
         if (self.isAnimating) return;
@@ -155,7 +172,7 @@ export default class OddOutScene extends Phaser.Scene {
 
       this.time.delayedCall(1200, function() {
         cText.destroy();
-        self.difficulty = Math.min(self.difficulty + 1, 10);
+        self.difficulty = self.adaptive.record(true);
         self.newRound();
         try { localStorage.setItem('bg-oddout-high', String(self.difficulty)); } catch(e) {}
       });
@@ -173,11 +190,14 @@ export default class OddOutScene extends Phaser.Scene {
       });
 
       this.time.delayedCall(1500, function() {
-        self.difficulty = Math.max(self.difficulty - 1, 1);
+        self.difficulty = self.adaptive.record(false);
         self.newRound();
       });
     }
   }
 }
+
+
+
 
 

@@ -2,6 +2,9 @@ import { generateRound, COLOR_PALETTE } from "../generators/ColorTrainGenerator.
 import SoundManager from "../utils/SoundManager.js";
 import VoicePrompt from "../utils/VoicePrompt.js";
 
+import BackgroundMusic from '../utils/BackgroundMusic.js';
+import AdaptiveDifficulty from '../utils/AdaptiveDifficulty.js';
+
 export default class ColorTrainScene extends Phaser.Scene {
   constructor() {
     super({ key: "ColorTrainScene" });
@@ -15,6 +18,8 @@ export default class ColorTrainScene extends Phaser.Scene {
     this.roundData = null;
     this.isAnimating = false;
     this.voicePrompt = null;
+    this.bgMusic = null;
+    this.adaptive = null;
   }
 
   create() {
@@ -25,6 +30,11 @@ export default class ColorTrainScene extends Phaser.Scene {
     this.newRound();
 
     this.voicePrompt = new VoicePrompt(this);
+    this.bgMusic = new BackgroundMusic();
+    this.bgMusic.start();
+    this.adaptive = new AdaptiveDifficulty();
+    this.adaptive.level = this.difficulty;
+
     this.voicePrompt.start(
       '把缺的颜色补上去！看看小火车的颜色规律……',
       '红色后面是什么颜色呢？想一想！',
@@ -71,6 +81,7 @@ export default class ColorTrainScene extends Phaser.Scene {
   }
 
   shutdown() {
+    if (this.bgMusic) { this.bgMusic.stop(); this.bgMusic = null; }
     if (this.voicePrompt) { this.voicePrompt.stop(); this.voicePrompt = null; }
   }
 
@@ -110,9 +121,12 @@ export default class ColorTrainScene extends Phaser.Scene {
     const trainY = H * 0.32;
 
     // Engine
-    const eng = this.add.text(startX + engW / 2, trainY, "\ud83d\ude82", {
-      fontSize: Math.round(carW * 0.9) + "px",
-    }).setOrigin(0.5);
+    var eng;
+    if (this.textures.exists('train_engine')) {
+      eng = this.add.image(startX + engW / 2, trainY, 'train_engine').setDisplaySize(engW, engW * 0.8).setOrigin(0.5);
+    } else {
+      eng = this.add.text(startX + engW / 2, trainY, "\ud83d\ude82", { fontSize: Math.round(carW * 0.9) + "px" }).setOrigin(0.5);
+    }
 
     // Connecting bar
     const bar = this.add.graphics();
@@ -309,7 +323,7 @@ export default class ColorTrainScene extends Phaser.Scene {
       ct.destroy();
       homeBg.destroy();
       homeT.destroy();
-      this.difficulty = Math.min(this.difficulty + 1, 10);
+      this.difficulty = this.adaptive.record(true);
         try { localStorage.setItem('bg-train-high', String(this.difficulty)); } catch(e) {}
       this.newRound();
     });
@@ -346,6 +360,8 @@ export default class ColorTrainScene extends Phaser.Scene {
     }
   }
 }
+
+
 
 
 

@@ -1,15 +1,15 @@
 {
   "name": "brain-garden",
-  "version": "1.0.0-beta.2",
-  "description": "3岁儿童逻辑思维游戏 - 小动物喂食",
+  "version": "1.0.0-beta.3",
+  "description": "3\u5c81\u513f\u7ae5\u903b\u8f91\u601d\u7ef4\u6e38\u620f - \u5c0f\u52a8\u7269\u5582\u98df",
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0 --port 3000",
     "build": "vite build",
     "preview": "vite preview --host 0.0.0.0 --port 3000",
     "validate": "node scripts/validate.mjs",
-    "lint": "npx eslint src/ --ext .js 2>/dev/null || echo \"⚠️  ESLint not installed\"",
-    "test": "echo \"⚠️  No tests yet. Add tests in tests/ directory.\"",
+    "lint": "npx eslint src/ --ext .js 2>/dev/null || echo \"\u26a0\ufe0f  ESLint not installed\"",
+    "test": "echo \"\u26a0\ufe0f  No tests yet. Add tests in tests/ directory.\"",
     "prebuild": "npm run validate"
   },
   "dependencies": {

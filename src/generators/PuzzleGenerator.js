@@ -18,6 +18,7 @@ var PUZZLE_SETS = [
   ['☀️','⛅','🌧️','🌈','⭐','🌙'],  // weather/ sky
   ['🥚','🐣','🐥','🐔','🍗','🍽️'], // chicken life (funny!)
   ['1️⃣','2️⃣','3️⃣','4️⃣','5️⃣','6️⃣'], // numbers
+  ['puzzle_cat','puzzle_dog','puzzle_bunny','puzzle_fish'], // AI animals
 ];
 
 export function generateRound(difficulty) {
@@ -44,4 +45,5 @@ export function generateRound(difficulty) {
 }
 
 export { PUZZLE_SETS };
+
 

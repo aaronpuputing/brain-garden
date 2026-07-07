@@ -1,3 +1,18 @@
+## [1.0.0-beta.3] - 2026-07-07
+
+### Added
+- **Agnes AI 图片素材** — 18 张高质量儿童绘本风格素材（FeedAnimals/Memory/Gardener/BearSort）
+- **AI 图片集成** — FeedAnimalsScene 动物和食物用 AI 图片替换 emoji
+- **MemoryScene 水果卡片** — 优先使用 AI 图片，无图片时 emoji 回退
+- **BootScene 图片预加载** — 扩展到 38 张素材完整列表
+
+### Fixed
+- **BearSortScene 尺寸差异** — 小熊/物品缩放范围 0.55→1.45 扩大到 0.35→2.2 (5 倍视觉差异)
+- **MemoryScene 崩溃 bug** — FRUIT_TO_IMAGE 未定义导致 ReferenceError
+
+### Infrastructure
+- generate_assets.py — 扩展覆盖全部 7 个游戏 38 个素材
+
 ## [1.0.0-beta.2] - 2026-07-07
 
 ### Fixed

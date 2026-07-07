@@ -1,14 +1,20 @@
 import { COLORS } from '../utils/AssetFactory.js';
 import VoicePrompt from '../utils/VoicePrompt.js';
 
+import BackgroundMusic from '../utils/BackgroundMusic.js';
+import AdaptiveDifficulty from '../utils/AdaptiveDifficulty.js';
+
 export default class MenuScene extends Phaser.Scene {
   constructor() { super({ key: 'MenuScene' }); }
 
   init() {
     this.voicePrompt = null;
+    this.bgMusic = null;
+    this.adaptive = null;
   }
 
   shutdown() {
+    if (this.bgMusic) { this.bgMusic.stop(); this.bgMusic = null; }
     if (this.voicePrompt) { this.voicePrompt.stop(); this.voicePrompt = null; }
   }
 
@@ -23,6 +29,11 @@ export default class MenuScene extends Phaser.Scene {
 
     // 主界面语音引导
     this.voicePrompt = new VoicePrompt(this);
+    this.bgMusic = new BackgroundMusic();
+    this.bgMusic.start();
+    this.adaptive = new AdaptiveDifficulty();
+    this.adaptive.level = this.difficulty;
+
     this.voicePrompt.start(
       '小朋友，欢迎来到思维花园！选一个游戏玩吧！',
       '点一朵花，就可以开始玩游戏啦！',
@@ -252,4 +263,5 @@ export default class MenuScene extends Phaser.Scene {
     g.fillCircle(x + 22 * s, y + 6 * s, 22 * s);
   }
 }
+
 

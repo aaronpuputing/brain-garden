@@ -1,7 +1,18 @@
 import { generateRound, CARD_BACK } from '../generators/MemoryGenerator.js';
 import SoundManager from '../utils/SoundManager.js';
 import VoicePrompt from "../utils/VoicePrompt.js";
+import BackgroundMusic from '../utils/BackgroundMusic.js';
+import AdaptiveDifficulty from '../utils/AdaptiveDifficulty.js';
 
+// Fruit emoji to AI image key mapping (fallback to emoji text if image unavailable)
+// FRUIT_TO_IMAGE: maps emoji to image key, falls back to null (use emoji)
+var FRUIT_TO_IMAGE = {
+  '🍎': 'memory_apple', '🍌': 'memory_banana', '🍓': 'memory_strawberry'
+};
+FRUIT_TO_IMAGE['🍎'] = 'mem_apple';
+FRUIT_TO_IMAGE['🍌'] = 'mem_banana';  
+FRUIT_TO_IMAGE['🍓'] = 'mem_strawberry';
+FRUIT_TO_IMAGE['🍇'] = 'mem_grape';
 export default class MemoryScene extends Phaser.Scene {
   constructor() { super({ key: 'MemoryScene' }); }
 
@@ -13,6 +24,8 @@ export default class MemoryScene extends Phaser.Scene {
     this.isChecking = false;
     this.cardObjects = [];
     this.voicePrompt = null;
+    this.bgMusic = null;
+    this.adaptive = null;
   }
 
   create() {
@@ -25,6 +38,11 @@ export default class MemoryScene extends Phaser.Scene {
     this.newRound();
 
     this.voicePrompt = new VoicePrompt(this);
+    this.bgMusic = new BackgroundMusic();
+    this.bgMusic.start();
+    this.adaptive = new AdaptiveDifficulty();
+    this.adaptive.level = this.difficulty;
+
     this.voicePrompt.start(
       '翻开卡片，找到两个相同的水果！',
       '记住卡片的位置，找一样的！',
@@ -33,6 +51,7 @@ export default class MemoryScene extends Phaser.Scene {
   }
 
   shutdown() {
+    if (this.bgMusic) { this.bgMusic.stop(); this.bgMusic = null; }
     if (this.voicePrompt) { this.voicePrompt.stop(); this.voicePrompt = null; }
   }
 
@@ -76,7 +95,7 @@ export default class MemoryScene extends Phaser.Scene {
     this.flippedCards = [];
     this.matchedCount = 0;
     this.isChecking = false;
-    this.cardObjects.forEach(function(c) { c.bg.destroy(); c.text.destroy(); });
+    this.cardObjects.forEach(function(c) { c.bg.destroy(); c.text.destroy(); if (c.frontImg) c.frontImg.destroy(); });
     this.cardObjects = [];
 
     this.currentRound = generateRound(this.difficulty);
@@ -108,7 +127,29 @@ export default class MemoryScene extends Phaser.Scene {
         fontSize: Math.floor(cardW * 0.6) + 'px', fontFamily: 'sans-serif'
       }).setOrigin(0.5).setInteractive();
 
-      var cardObj = { card: card, bg: bg, text: txt, cx: cx, cy: cy, flipped: false, cardW: cardW, cardH: cardH };
+      var imgKey = FRUIT_TO_IMAGE[card.fruit];
+      var frontImg = null;
+      if (imgKey && self.textures.exists(imgKey)) {
+        frontImg = self.add.image(cx, cy, imgKey);
+        frontImg.setScale(Math.min(cardW, cardH) / 256 * 0.7);
+        frontImg.setVisible(false);
+      }
+      var emojiFallback = self.add.text(cx, cy, card.fruit, {
+          fontSize: Math.floor(cardW * 0.55) + 'px', fontFamily: 'sans-serif'
+        }).setOrigin(0.5).setVisible(false);
+      var cardObj = { card: card, bg: bg, text: txt, frontImg: frontImg, emojiText: emojiFallback, cx: cx, cy: cy, flipped: false, cardW: cardW, cardH: cardH,
+        showFront: function() {
+          if (FRUIT_TO_IMAGE[card.fruit]) {
+            frontImg.setVisible(true);
+          } else {
+            emojiFallback.setVisible(true);
+          }
+        },
+        hideFront: function() {
+          frontImg.setVisible(false);
+          emojiFallback.setVisible(false);
+        }
+      };
 
       txt.on('pointerdown', function() {
         if (self.isChecking || cardObj.flipped || card.matched) return;
@@ -128,7 +169,8 @@ export default class MemoryScene extends Phaser.Scene {
       targets: [cardObj.bg, cardObj.text],
       scaleX: 0, duration: 80,
       onComplete: function() {
-        cardObj.text.setText(cardObj.card.fruit);
+        cardObj.text.setVisible(false);
+        cardObj.showFront();
         cardObj.bg.fillStyle(0xFFF8E1, 1);
         var hw = cardObj.cardW / 2, hh = cardObj.cardH / 2;
         cardObj.bg.fillRoundedRect(cardObj.cx - hw, cardObj.cy - hh, cardObj.cardW, cardObj.cardH, 12);
@@ -184,7 +226,8 @@ export default class MemoryScene extends Phaser.Scene {
           targets: [c1.bg, c1.text],
           scaleX: 0, duration: 80,
           onComplete: function() {
-            c1.text.setText(CARD_BACK);
+            c1.hideFront();
+            c1.text.setVisible(true);
             c1.bg.fillStyle(0x66BB6A, 1);
             c1.bg.fillRoundedRect(c1.cx-c1.cardW/2,c1.cy-c1.cardH/2,c1.cardW,c1.cardH,12);
             self.tweens.add({ targets: [c1.bg, c1.text], scaleX: 1, duration: 80 });
@@ -194,7 +237,8 @@ export default class MemoryScene extends Phaser.Scene {
           targets: [c2.bg, c2.text],
           scaleX: 0, duration: 80,
           onComplete: function() {
-            c2.text.setText(CARD_BACK);
+            c2.hideFront();
+            c2.text.setVisible(true);
             c2.bg.fillStyle(0x66BB6A, 1);
             c2.bg.fillRoundedRect(c2.cx-c2.cardW/2,c2.cy-c2.cardH/2,c2.cardW,c2.cardH,12);
             self.tweens.add({ targets: [c2.bg, c2.text], scaleX: 1, duration: 80 });
@@ -210,7 +254,7 @@ export default class MemoryScene extends Phaser.Scene {
     var self = this;
     this.soundManager.playCelebrate();
     this.isChecking = true;
-    this.difficulty = Math.min(this.difficulty + 1, 10);
+    this.difficulty = this.adaptive.record(true);
 
     var txt = this.add.text(this.gameW / 2, this.gameH / 2 - 20, '🎉 全部找到啦！🎉', {
       fontSize: '36px', color: '#FF8C00', fontFamily: 'sans-serif', fontStyle: 'bold',
@@ -239,5 +283,8 @@ export default class MemoryScene extends Phaser.Scene {
     try { localStorage.setItem('bg-memory-high', String(self.difficulty)); } catch(e) {}
   }
 }
+
+
+
 
 

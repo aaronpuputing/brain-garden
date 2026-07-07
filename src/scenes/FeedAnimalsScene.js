@@ -6,7 +6,11 @@
  */
 import { generateRound, EMOJI_MAP } from "../generators/FeedAnimalsGenerator.js";
 import SoundManager from "../utils/SoundManager.js";
+import { getFitScale } from "../utils/AssetFactory.js";
 import VoicePrompt from "../utils/VoicePrompt.js";
+
+import BackgroundMusic from '../utils/BackgroundMusic.js';
+import AdaptiveDifficulty from '../utils/AdaptiveDifficulty.js';
 
 
 
@@ -24,6 +28,8 @@ export default class FeedAnimalsScene extends Phaser.Scene {
     this.isAnimating = false;
     this.soundManager = null;
     this.voicePrompt = null;
+    this.bgMusic = null;
+    this.adaptive = null;
   }
 
   create() {
@@ -36,6 +42,11 @@ export default class FeedAnimalsScene extends Phaser.Scene {
     this.newRound();
 
     this.voicePrompt = new VoicePrompt(this);
+    this.bgMusic = new BackgroundMusic();
+    this.bgMusic.start();
+    this.adaptive = new AdaptiveDifficulty();
+    this.adaptive.level = this.difficulty;
+
     this.voicePrompt.start(
       '把鱼拖给小猫，把骨头拖给小狗，把胡萝卜拖给小兔子！',
       '想一想，小动物们爱吃什么呀？',
@@ -44,6 +55,7 @@ export default class FeedAnimalsScene extends Phaser.Scene {
   }
 
   shutdown() {
+    if (this.bgMusic) { this.bgMusic.stop(); this.bgMusic = null; }
     if (this.voicePrompt) { this.voicePrompt.stop(); this.voicePrompt = null; }
   }
 
@@ -169,12 +181,12 @@ export default class FeedAnimalsScene extends Phaser.Scene {
 
     round.animals.forEach((animal, i) => {
       const pos = round.animalPositions[i];
-      const sprite = this.add.text(pos.x, pos.y, EMOJI_MAP[animal] || animal, { fontSize: "72px", fontFamily: "sans-serif" }).setOrigin(0.5);
+      const sprite = this.add.image(pos.x, pos.y, "feed_" + animal).setDisplaySize(80, 80).setOrigin(0.5);
       sprite.setScale(pos.scale * 1.3);
       this.tweens.add({
         targets: sprite,
-        scaleX: pos.scale * 1.3 * 1.06,
-        scaleY: pos.scale * 1.3 * 1.06,
+        scaleX: sprite.scaleX * 1.06,
+        scaleY: sprite.scaleY * 1.06,
         duration: 1800 + Math.random() * 400,
         yoyo: true,
         repeat: -1,
@@ -185,7 +197,7 @@ export default class FeedAnimalsScene extends Phaser.Scene {
 
     round.foods.forEach((food, i) => {
       const pos = round.foodPositions[i];
-      const sprite = this.add.text(pos.x, pos.y, EMOJI_MAP[food.foodType] || food.foodType, { fontSize: "80px", fontFamily: "sans-serif" }).setOrigin(0.5);
+      const sprite = this.add.image(pos.x, pos.y, "feed_" + food.foodType).setDisplaySize(72, 72).setOrigin(0.5);
       sprite.setScale(pos.scale * 1.1);
       sprite.setInteractive(new Phaser.Geom.Rectangle(-40, -40, 80, 80), Phaser.Geom.Rectangle.Contains);
       this.input.setDraggable(sprite);
@@ -206,8 +218,8 @@ export default class FeedAnimalsScene extends Phaser.Scene {
       this.tweens.add({
         targets: sprite,
         alpha: 1,
-        scaleX: pos.scale * 1.1,
-        scaleY: pos.scale * 1.1,
+        scaleX: foodBaseScale * pos.scale * 1.1,
+        scaleY: foodBaseScale * pos.scale * 1.1,
         duration: 350,
         delay: i * 100,
         ease: "Back.easeOut",
@@ -307,9 +319,9 @@ export default class FeedAnimalsScene extends Phaser.Scene {
       f => f.targetAnimal === food.foodData.targetAnimal
     );
     this.tweens.add({
-      targets: food,
-      x: food.originalPos.x, y: food.originalPos.y,
-      scaleX: 0.9, scaleY: 0.9,
+        targets: food,
+        x: food.originalPos.x, y: food.originalPos.y,
+        scaleX: food._displayScaleX, scaleY: food._displayScaleY,
       duration: 350,
       ease: "Back.easeOut",
       onComplete: () => {
@@ -422,7 +434,7 @@ export default class FeedAnimalsScene extends Phaser.Scene {
         duration: 250,
         onComplete: () => {
           celebrate.destroy();
-          this.difficulty = Math.min(this.difficulty + 1, 10);
+          this.difficulty = this.adaptive.record(true);
           try { localStorage.setItem('bg-feed-high', String(this.difficulty)); } catch(e) {}
           this.isAnimating = true;
 
@@ -450,6 +462,9 @@ export default class FeedAnimalsScene extends Phaser.Scene {
     });
   }
 }
+
+
+
 
 
 

@@ -1,6 +1,9 @@
 import { generateRound } from '../generators/BearSortGenerator.js';
 import SoundManager from '../utils/SoundManager.js';
 import VoicePrompt from '../utils/VoicePrompt.js';
+
+import BackgroundMusic from '../utils/BackgroundMusic.js';
+import AdaptiveDifficulty from '../utils/AdaptiveDifficulty.js';
 import { COLORS } from '../utils/AssetFactory.js';
 
 // 小熊颜色（从小到大）
@@ -25,6 +28,8 @@ export default class BearSortScene extends Phaser.Scene {
     this.bearSprites = [];
     this.itemSprites = [];
     this.voicePrompt = null;
+    this.bgMusic = null;
+    this.adaptive = null;
   }
 
   create() {
@@ -38,6 +43,11 @@ export default class BearSortScene extends Phaser.Scene {
 
     // 语音提示 — 小朋友不认识字也能听懂
     this.voicePrompt = new VoicePrompt(this);
+    this.bgMusic = new BackgroundMusic();
+    this.bgMusic.start();
+    this.adaptive = new AdaptiveDifficulty();
+    this.adaptive.level = this.difficulty;
+
     this.voicePrompt.start(
       '把大的东西拿给大熊，小的东西拿给小熊！',
       '看一看，哪个东西大，哪个东西小呀？',
@@ -46,6 +56,7 @@ export default class BearSortScene extends Phaser.Scene {
   }
 
   shutdown() {
+    if (this.bgMusic) { this.bgMusic.stop(); this.bgMusic = null; }
     if (this.voicePrompt) { this.voicePrompt.stop(); this.voicePrompt = null; }
   }
 
@@ -128,13 +139,13 @@ export default class BearSortScene extends Phaser.Scene {
     round.bears.forEach(function(bear, i) {
       var bx = spacing * (i + 1);
       var by = H * 0.32;
-      var sizeScale = 0.55 + (bear.size - 0.55) * 1.8; // 放大差异: 0.55→1.45
-      if (sizeScale > 1.45) sizeScale = 1.45;
-      if (sizeScale < 0.55) sizeScale = 0.55;
+      var sizeScale = 0.35 + (bear.size - 0.7) / 0.65 * 1.85; // 宽幅缩放: 0.35→2.2
+      if (sizeScale > 2.2) sizeScale = 2.2;
+      if (sizeScale < 0.35) sizeScale = 0.35;
 
       // 小熊身体（emoji）
       var bearText = self.add.text(bx, by, '🐻', {
-        fontSize: Math.floor(70 * sizeScale) + 'px', fontFamily: 'sans-serif'
+        fontSize: Math.floor(100 * sizeScale) + 'px', fontFamily: 'sans-serif'
       }).setOrigin(0.5);
 
       // 帽子 — 不同颜色帮助区分
@@ -156,9 +167,9 @@ export default class BearSortScene extends Phaser.Scene {
     round.items.forEach(function(item, i) {
       var ix = spacing * (i + 1);
       var iy = H * 0.75;
-      var itemScale = 0.55 + (item.size - 0.55) * 1.8;
-      if (itemScale > 1.45) itemScale = 1.45;
-      if (itemScale < 0.55) itemScale = 0.55;
+      var itemScale = 0.35 + (item.size - 0.7) / 0.65 * 1.85; // 同样宽幅
+      if (itemScale > 2.2) itemScale = 2.2;
+      if (itemScale < 0.35) itemScale = 0.35;
 
       // 物品背景圆（让小朋友知道可以拖）
       var bg = self.add.graphics();
@@ -168,8 +179,10 @@ export default class BearSortScene extends Phaser.Scene {
       bg.destroy();
 
       // Canvas 纹理图像
+      var itemTargetW = 80; // Target display width for sort items
+      var fitScale = getFitScale(self, textureKey, itemTargetW);
       var sprite = self.add.image(ix, iy, textureKey);
-      sprite.setScale(itemScale * 0.8);
+      sprite.setScale(fitScale * itemScale * 0.8);
       sprite.setInteractive({ useHandCursor: false, draggable: true });
       self.input.setDraggable(sprite);
       sprite.itemData = item;
@@ -266,7 +279,7 @@ export default class BearSortScene extends Phaser.Scene {
 
     if (this.voicePrompt) this.voicePrompt.say('太棒啦！全部都对啦！');
 
-    this.difficulty = Math.min(this.difficulty + 1, 10);
+    this.difficulty = this.adaptive.record(true);
 
     var txt = this.add.text(this.gameW / 2, this.gameH / 2, '🎉 太棒了！🎉', {
       fontSize: '40px', color: '#FF8C00', fontFamily: 'sans-serif', fontStyle: 'bold',
@@ -289,7 +302,7 @@ export default class BearSortScene extends Phaser.Scene {
     playBtn.on('pointerdown', function() {
       if (self.voicePrompt) self.voicePrompt.say('再来一轮！');
       txt.destroy(); playBtn.destroy(); homeBtn.destroy();
-      self.difficulty = Math.max(self.difficulty - 1, 1);
+      self.difficulty = self.adaptive.record(false);
       self.newRound();
     });
 
@@ -298,4 +311,5 @@ export default class BearSortScene extends Phaser.Scene {
     try { localStorage.setItem('bg-bearsort-high', String(this.difficulty)); } catch(e) {}
   }
 }
+
 

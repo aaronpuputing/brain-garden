@@ -2,6 +2,9 @@ import { generateRound } from '../generators/PuzzleGenerator.js';
 import SoundManager from '../utils/SoundManager.js';
 import VoicePrompt from '../utils/VoicePrompt.js';
 
+import BackgroundMusic from '../utils/BackgroundMusic.js';
+import AdaptiveDifficulty from '../utils/AdaptiveDifficulty.js';
+
 export default class PuzzleScene extends Phaser.Scene {
   constructor() { super({ key: 'PuzzleScene' }); }
 
@@ -13,6 +16,8 @@ export default class PuzzleScene extends Phaser.Scene {
     this.totalPieces = 0;
     this.isAnimating = false;
     this.voicePrompt = null;
+    this.bgMusic = null;
+    this.adaptive = null;
   }
 
   create() {
@@ -25,6 +30,11 @@ export default class PuzzleScene extends Phaser.Scene {
     this.newRound();
 
     this.voicePrompt = new VoicePrompt(this);
+    this.bgMusic = new BackgroundMusic();
+    this.bgMusic.start();
+    this.adaptive = new AdaptiveDifficulty();
+    this.adaptive.level = this.difficulty;
+
     this.voicePrompt.start(
       '按顺序把图案拖到正确的位置！',
       '看一看，每个格子里想要什么图案呢？',
@@ -33,6 +43,7 @@ export default class PuzzleScene extends Phaser.Scene {
   }
 
   shutdown() {
+    if (this.bgMusic) { this.bgMusic.stop(); this.bgMusic = null; }
     if (this.voicePrompt) { this.voicePrompt.stop(); this.voicePrompt = null; }
   }
 
@@ -117,12 +128,13 @@ export default class PuzzleScene extends Phaser.Scene {
     self.currentRound.pieces.forEach(function(piece) {
       var px = 50 + Math.random() * (W - 100);
       var py = H * 0.78 + Math.random() * (H * 0.1);
-      var sprite = self.add.text(px, py, piece.emoji, {
-        fontSize: Math.floor(pieceSize * 0.55) + 'px',
-        fontFamily: 'sans-serif',
-        backgroundColor: '#FFFFFFCC',
-        padding: { x: pieceSize * 0.18, y: 10 }
-      }).setOrigin(0.5).setInteractive({ useHandCursor: false, draggable: true });
+      var isImgKey = piece.emoji && piece.emoji.startsWith('puzzle_');
+      var sprite;
+      if (isImgKey && self.textures.exists(piece.emoji)) {
+        sprite = self.add.image(px, py, piece.emoji).setDisplaySize(70, 70).setOrigin(0.5).setInteractive({ useHandCursor: false, draggable: true });
+      } else {
+        sprite = self.add.text(px, py, piece.emoji, { fontSize: Math.floor(pieceSize * 0.55) + 'px', fontFamily: 'sans-serif', backgroundColor: '#FFFFFFCC', padding: { x: pieceSize * 0.18, y: 10 } }).setOrigin(0.5).setInteractive({ useHandCursor: false, draggable: true });
+      }
 
       self.input.setDraggable(sprite);
       sprite.pieceData = piece;
@@ -230,7 +242,7 @@ export default class PuzzleScene extends Phaser.Scene {
     this.isAnimating = true;
     this.voicePrompt.say('太棒啦！全部拼好啦！');
 
-    this.difficulty = Math.min(this.difficulty + 1, 10);
+    this.difficulty = this.adaptive.record(true);
 
     var txt = this.add.text(this.gameW / 2, this.gameH / 2 - 20, '🎉 拼好啦！🎉', {
       fontSize: '40px', color: '#FF8C00', fontFamily: 'sans-serif', fontStyle: 'bold',
@@ -259,4 +271,6 @@ export default class PuzzleScene extends Phaser.Scene {
     try { localStorage.setItem('bg-puzzle-high', String(self.difficulty)); } catch(e) {}
   }
 }
+
+
 

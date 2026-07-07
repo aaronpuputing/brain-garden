@@ -2,6 +2,9 @@ import { generateRound } from '../generators/GardenerGenerator.js';
 import SoundManager from '../utils/SoundManager.js';
 import VoicePrompt from "../utils/VoicePrompt.js";
 
+import BackgroundMusic from '../utils/BackgroundMusic.js';
+import AdaptiveDifficulty from '../utils/AdaptiveDifficulty.js';
+
 export default class GardenerScene extends Phaser.Scene {
   constructor() { super({ key: 'GardenerScene' }); }
 
@@ -11,6 +14,8 @@ export default class GardenerScene extends Phaser.Scene {
     this.isAnimating = false;
     this.stepSprites = [];
     this.voicePrompt = null;
+    this.bgMusic = null;
+    this.adaptive = null;
   }
 
   create() {
@@ -23,6 +28,11 @@ export default class GardenerScene extends Phaser.Scene {
     this.newRound();
 
     this.voicePrompt = new VoicePrompt(this);
+    this.bgMusic = new BackgroundMusic();
+    this.bgMusic.start();
+    this.adaptive = new AdaptiveDifficulty();
+    this.adaptive.level = this.difficulty;
+
     this.voicePrompt.start(
       '跟着步骤，一步一步种出漂亮的花！',
       '看一看，下一步该做什么呢？',
@@ -31,6 +41,7 @@ export default class GardenerScene extends Phaser.Scene {
   }
 
   shutdown() {
+    if (this.bgMusic) { this.bgMusic.stop(); this.bgMusic = null; }
     if (this.voicePrompt) { this.voicePrompt.stop(); this.voicePrompt = null; }
   }
 
@@ -95,7 +106,7 @@ export default class GardenerScene extends Phaser.Scene {
 
   newRound() {
     var self = this;
-    if (self.stepSprites) self.stepSprites.forEach(function(s) { s.destroy(); });
+    if (self.stepSprites) self.stepSprites.forEach(function(s) { if (s.bg) s.bg.destroy(); if (s.emoji) s.emoji.destroy(); if (s.label) s.label.destroy(); });
     self.stepSprites = [];
     self.currentStep = 0;
     self.isAnimating = false;
@@ -209,7 +220,7 @@ export default class GardenerScene extends Phaser.Scene {
         self.tweens.add({ targets: sg, alpha: 0, duration: 1200, onComplete: function() { sg.destroy(); } });
 
         self.time.delayedCall(2000, function() {
-          self.difficulty = Math.min(self.difficulty + 1, 10);
+          self.difficulty = self.adaptive.record(true);
           self.newRound();
           try { localStorage.setItem('bg-gardener-high', String(self.difficulty)); } catch(e) {}
         });
@@ -219,5 +230,7 @@ export default class GardenerScene extends Phaser.Scene {
     }
   }
 }
+
+
 
 
