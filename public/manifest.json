@@ -1,0 +1,11 @@
+{
+  "name": "Brain Garden - 思维花园",
+  "short_name": "Brain Garden",
+  "description": "3岁儿童逻辑思维训练游戏",
+  "start_url": "../index.html",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#F5F0E8",
+  "theme_color": "#B5D8A8",
+  "icons": []
+}
