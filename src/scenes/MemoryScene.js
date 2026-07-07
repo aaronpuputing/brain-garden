@@ -7,7 +7,10 @@ import AdaptiveDifficulty from '../utils/AdaptiveDifficulty.js';
 // Fruit emoji to AI image key mapping (fallback to emoji text if image unavailable)
 // FRUIT_TO_IMAGE: maps emoji to image key, falls back to null (use emoji)
 var FRUIT_TO_IMAGE = {
-  '🍎': 'memory_apple', '🍌': 'memory_banana', '🍓': 'memory_strawberry'
+  '🍎': 'memory_apple', '🍌': 'memory_banana', '🍓': 'memory_strawberry',
+  '🍇': 'memory_grape', '🍊': 'memory_orange', '🍒': 'memory_cherry',
+  '🍋': 'memory_lemon', '🍑': 'memory_peach', '🥝': 'memory_kiwi',
+  '🍐': 'memory_pear', '🥭': 'memory_mango', '🍍': 'memory_pineapple'
 };
 FRUIT_TO_IMAGE['🍎'] = 'mem_apple';
 FRUIT_TO_IMAGE['🍌'] = 'mem_banana';  
@@ -283,6 +286,7 @@ export default class MemoryScene extends Phaser.Scene {
     try { localStorage.setItem('bg-memory-high', String(self.difficulty)); } catch(e) {}
   }
 }
+
 
 
 

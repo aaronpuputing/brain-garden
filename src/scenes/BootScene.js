@@ -5,7 +5,7 @@ import generateAllTextures, { generateStarTexture } from '../utils/AssetFactory.
 const AI_IMAGES = [
   'feed_cat.png', 'feed_dog.png', 'feed_bunny.png',
   'feed_fish.png', 'feed_bone.png', 'feed_carrot.png',
-  'memory_apple.png', 'memory_banana.png', 'memory_strawberry.png',
+  'memory_apple.png', 'memory_banana.png', 'memory_strawberry.png', 'memory_grape.png', 'memory_orange.png', 'memory_cherry.png',
   'gardener_seed.png', 'gardener_sprout.png', 'gardener_watering_can.png',
   'train_engine.png', 'bearsort_backpack.png', 'bearsort_chair.png', 'bearsort_coat.png',
   'puzzle_bunny.png', 'puzzle_cat.png', 'puzzle_dog.png', 'puzzle_fish.png',
@@ -35,4 +35,5 @@ export default class BootScene extends Phaser.Scene {
     this.time.delayedCall(500, function() { this.scene.start('MenuScene'); }, [], this);
   }
 }
+
 
