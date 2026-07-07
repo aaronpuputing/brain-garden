@@ -89,6 +89,7 @@ export function generateRound(difficulty = 1) {
   const positions = getLayout(selectedAnimals.length, foods.length);
 
   return {
+    difficulty: difficulty || 1,
     animals: selectedAnimals,
     foods: foods,
     foodSequence: foods.map(f => f.foodType),
@@ -141,3 +142,4 @@ export function getFoodTextureKey(foodType) {
 }
 
 export { ANIMALS, ALL_FOODS, ANIMAL_FOOD_MAP, EMOJI_MAP };
+
